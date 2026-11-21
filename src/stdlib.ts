@@ -24,7 +24,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { Declaration, scanDeclarations, symbolKindFor } from './declarations';
-import { CompletionItem, DocumentSymbol, MarkupContent, SymbolKind } from './types';
+import { CompletionItem, DocumentSymbol, MarkupContent } from './types';
 
 export interface ModuleIndex {
   /** Module name without the `.fin` extension, e.g. `strings` for `strings.fin`. */
@@ -190,4 +190,3 @@ export function declarationAt(declarations: Declaration[], line: number): Declar
   return null;
 }
 
-export { SymbolKind };

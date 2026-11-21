@@ -538,6 +538,10 @@ export class FinLanguageServer {
       this.publishMissingCompiler(uri, document);
       return;
     }
+    // Pin the version this run is answering. The buffer keeps mutating while
+    // `finc` runs, so comparing it to itself later would always pass.
+    const checkedVersion = document.version;
+    const checkedText = document.getText();
     const controller = new AbortController();
     state.controller = controller;
     const check = await checkDocument({
@@ -550,23 +554,25 @@ export class FinLanguageServer {
     });
     // A newer edit exists: this answer is historical and must not land.
     const current = this.pending.get(uri);
+    const live = this.documents.get(uri);
     if (
       controller.signal.aborted ||
-      document.version !== (this.documents.get(uri)?.version ?? document.version) ||
       current !== state ||
-      state.generation !== current?.generation
+      live === undefined ||
+      live.version !== checkedVersion ||
+      live.getText() !== checkedText
     ) {
       return;
     }
     this.pending.delete(uri);
-    this.handleCheckOutcome(uri, document, check);
+    this.handleCheckOutcome(uri, live, check, checkedVersion);
   }
 
-  private handleCheckOutcome(uri: string, document: Document, outcome: CheckOutcome): void {
+  private handleCheckOutcome(uri: string, document: Document, outcome: CheckOutcome, version: number): void {
     if (outcome.status === 'missing') {
       this.lastFailureDetail = outcome.message;
       this.reportMissingCompiler();
-      this.publishMissingCompiler(uri, document);
+      this.publishMissingCompiler(uri, document, version);
       if (outcome.detail) this.log(1, `finc could not start: ${outcome.detail}`);
       return;
     }
@@ -594,7 +600,7 @@ export class FinLanguageServer {
             message: `finc failed without reporting diagnostics, so this file was not checked. ${outcome.message}`,
           },
         ],
-        document.version,
+        version,
       );
       return;
     }
@@ -608,10 +614,10 @@ export class FinLanguageServer {
       }
       diagnostics.push(compilerDiagnosticToLsp(document, diagnostic));
     }
-    this.publish(uri, document, diagnostics, document.version);
+    this.publish(uri, document, diagnostics, version);
   }
 
-  private publishMissingCompiler(uri: string, document: Document): void {
+  private publishMissingCompiler(uri: string, document: Document, version = document.version): void {
     this.publish(
       uri,
       document,
@@ -626,7 +632,7 @@ export class FinLanguageServer {
             'This file has not been type-checked and is not known to be clean.',
         },
       ],
-      document.version,
+      version,
     );
   }
 
@@ -945,4 +951,3 @@ export class FinLanguageServer {
   }
 }
 
-export { MessageReader, encodeMessage, runTool, compilerRangeToLsp };

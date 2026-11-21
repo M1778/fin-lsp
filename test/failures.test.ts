@@ -199,8 +199,17 @@ test('a slow result cannot overwrite the answer for a newer edit', async () => {
   const published = harness.inbox.filter(
     (candidate) => candidate.method === 'textDocument/publishDiagnostics' && candidate.params.uri === uri,
   );
+  // The slow run was answering version 1. If the generation guard fails, its
+  // result is published with version 1 after version 2 already landed, and this
+  // assertion catches it.
   const versions = published.map((candidate) => candidate.params.version);
   assert.deepEqual(versions, [2], 'only the newest version is published');
+  assert.ok(
+    !published.some((candidate) =>
+      candidate.params.diagnostics.some((diagnostic: any) => diagnostic.code === 'E9999'),
+    ),
+    'the slow run\'s diagnostic never appears',
+  );
   await harness.stop();
   fs.rmSync(directory, { recursive: true, force: true });
 });
