@@ -85,7 +85,6 @@ interface PendingCheck {
   generation: number;
   timer: NodeJS.Timeout | null;
   controller: AbortController | null;
-  lastPublishedVersion: number | null;
 }
 
 const MISSING_COMPILER_CODE = 'fin-lsp/compiler-missing';
@@ -512,12 +511,7 @@ export class FinLanguageServer {
     const generation = (previous?.generation ?? 0) + 1;
     if (previous?.timer) clearTimeout(previous.timer);
     previous?.controller?.abort();
-    const state: PendingCheck = {
-      generation,
-      timer: null,
-      controller: null,
-      lastPublishedVersion: previous?.lastPublishedVersion ?? null,
-    };
+    const state: PendingCheck = { generation, timer: null, controller: null };
     this.pending.set(uri, state);
     if (delayMs <= 0) {
       void this.runCheck(uri, state);

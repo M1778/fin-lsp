@@ -57,7 +57,7 @@ export class Document implements LineSource {
     return this.text;
   }
 
-  /** True when the buffer still matches what was loaded from disk. */
+  /** Number of lines; a trailing terminator creates one final empty line. */
   get lineCount(): number {
     this.ensureStarts();
     return this.starts!.length;
