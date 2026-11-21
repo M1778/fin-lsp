@@ -138,6 +138,16 @@ Settings can be set per project with `.dir-locals.el`:
 
 ### VS Code
 
+There is an official extension, [`fin-vscode`](https://github.com/M1778/fin-vscode),
+which is an independent implementation rather than a wrapper around this server: it spawns
+`finc` and `finfmt` per request and keeps no long-lived process. Install it if you are in
+VS Code and want zero setup. Use this server if you want one tool across several editors, or
+if your client already speaks LSP.
+
+The two agree because they read the same standard library index and the same compiler
+diagnostic stream.
+
+
 There is no published extension in this repository; a minimal client is two files.
 
 `package.json`:
