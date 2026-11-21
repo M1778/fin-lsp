@@ -49,8 +49,15 @@ node dist/src/cli.js --help
 ```
 
 No build step is needed by editors if you point them at `dist/src/cli.js` after building.
-`npx --yes github:M1778/fin-lsp --stdio` also works: npm installs, runs `prepare`,
-builds, and starts the server.
+The published tarball already contains `dist/`, so `npm install fin-lsp` (or
+`npx fin-lsp --stdio`) runs without a compiler toolchain.
+
+Installing straight from Git also works, but git installs run `prepare`, so they build
+locally and therefore need the dev dependencies:
+
+```sh
+npx --yes --package=github:M1778/fin-lsp fin-lsp --stdio
+```
 
 ## Configuration
 
