@@ -276,8 +276,10 @@ Being explicit is cheaper than a wrong answer.
   tool itself does.
 - **No syntax highlighting.** Use the maintained TextMate grammar at
   `Fin/editors/textmate/fin.tmLanguage.json`; that is the editor's job, not the server's.
-- **Windows is supported by the code** (argv arrays, no shell, `finc.exe` resolution,
-  `os.tmpdir()`) but this release was developed on Linux; see CI for the tested matrix.
+- **Windows:** the code paths (argv arrays, no shell, `finc.exe` resolution, `os.tmpdir()`,
+  file-URI round-tripping) are exercised on `windows-latest` in CI, including the failure
+  modes. What CI cannot cover is a real `finc.exe`, because the compiler is not
+  distributed as a CI artifact; the real-compiler tests skip themselves there.
 
 ## Development
 
