@@ -21,7 +21,7 @@
     "build": "tsc -p tsconfig.json",
     "prepublishOnly": "npm run build",
     "test": "npm run build && npm run test:unit && npm run test:integration",
-    "test:unit": "node --test dist/test/framing.test.js dist/test/document.test.js dist/test/positions.test.js dist/test/declarations.test.js",
+    "test:unit": "node --test dist/test/framing.test.js dist/test/document.test.js dist/test/positions.test.js dist/test/declarations.test.js dist/test/imports.test.js",
     "test:integration": "node --test --test-concurrency=1 dist/test/integration.test.js dist/test/failures.test.js",
     "test:real": "node --test --test-concurrency=1 dist/test/integration.test.js",
     "smoke": "node test/tools/smoke.js"

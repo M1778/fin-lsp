@@ -348,6 +348,37 @@ test('definition jumps from an import name to lib/std', async () => {
   fs.rmSync(directory, { recursive: true, force: true });
 });
 
+test('definition works for an aliased module import', async () => {
+  const directory = workspace();
+  const source = 'import stdio::std as io;\nfun main() <noret> { io.printf("hi\\n"); }\n';
+  const file = writeFile(directory, 'alias.fin', source);
+  const uri = uriOf(file);
+  const client = new Client();
+  await client.request('initialize', {
+    processId: null,
+    rootUri: uriOf(directory),
+    capabilities: {},
+    initializationOptions: { fin: { stdlibPath: STDLIB } },
+  });
+  client.notify('initialized', {});
+  client.notify('textDocument/didOpen', { textDocument: { uri, languageId: 'fin', version: 1, text: source } });
+  const definition = await client.request('textDocument/definition', {
+    textDocument: { uri },
+    position: { line: 0, character: 8 },
+  });
+  assert.ok(definition.result, 'the module behind the alias is resolvable');
+  assert.match(definition.result.uri, /stdio\.fin$/);
+  const definitionOfName = await client.request('textDocument/definition', {
+    textDocument: { uri },
+    position: { line: 1, character: 26 },
+  });
+  assert.ok(definitionOfName.result, 'printf resolves to its declaration');
+  assert.match(definitionOfName.result.uri, /stdio\.fin$/);
+  await client.request('shutdown', undefined);
+  await client.stop();
+  fs.rmSync(directory, { recursive: true, force: true });
+});
+
 test('definition returns null for a local variable instead of guessing', async () => {
   const directory = workspace();
   const source = 'fun main() <noret> {\n    let local <int> = 1;\n    printf("%d", local);\n}\n';

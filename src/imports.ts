@@ -138,9 +138,13 @@ export function scanImports(lines: string[]): ImportStatement[] {
       }
     }
 
-    const moduleMatch = /from\s+([A-Za-z_][A-Za-z0-9_:]*)|import\s+([A-Za-z_][A-Za-z0-9_]*(?:::[A-Za-z_][A-Za-z0-9_]*)?)\s*(?:;|$)/.exec(
-      combined,
-    );
+    // `from module::std`, `import module::std`, `import module::std as alias`,
+    // and `import * from module::std`. The `as` clause must be consumed here or
+    // an aliased import matches no alternative at all.
+    const moduleMatch =
+      /from\s+([A-Za-z_][A-Za-z0-9_:]*)|import\s+([A-Za-z_][A-Za-z0-9_]*(?:::[A-Za-z_][A-Za-z0-9_]*)?)(?:\s+as\s+[A-Za-z_][A-Za-z0-9_]*)?\s*(?:;|$)/.exec(
+        combined,
+      );
     if (moduleMatch && !statement.path) {
       const raw = moduleMatch[1] ?? moduleMatch[2];
       const absolute = moduleMatch.index + moduleMatch[0].indexOf(raw);
