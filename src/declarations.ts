@@ -243,6 +243,37 @@ function bodyEnd(code: string[], startLine: number, startCharacter: number): { l
 }
 
 /**
+ * Names the file binds itself: `let`/`const` declarations and function
+ * parameters.
+ *
+ * Hover and completion fall back to the standard library for a name that is not
+ * declared in the file. Without this set, `let len <int> = 5;` followed by a use
+ * of `len` would answer with `strings::std`'s `len(s: string) <int>`, which is
+ * a confident answer to a different question. A wrong hover is worse than none.
+ */
+export function locallyBoundNames(text: string): Set<string> {
+  const names = new Set<string>();
+  const code = codify(text);
+  for (const line of code) {
+    for (const match of line.matchAll(/\b(?:let|const)\s+([A-Za-z_][A-Za-z0-9_]*)/g)) {
+      names.add(match[1]);
+    }
+    // Parameters and generic bounds: `(a: int, b: string)` and `<T: Number>`.
+    for (const match of line.matchAll(/[(<,]\s*([A-Za-z_][A-Za-z0-9_]*)\s*:/g)) {
+      names.add(match[1]);
+    }
+    // `foreach (i <int>, value <int> in values)`
+    for (const match of line.matchAll(/(?:foreach|for)\s*\(([^)]*)\)/g)) {
+      for (const part of match[1].split(',')) {
+        const name = /^\s*([A-Za-z_][A-Za-z0-9_]*)/.exec(part);
+        if (name) names.add(name[1]);
+      }
+    }
+  }
+  return names;
+}
+
+/**
  * All declarations in one file, in source order, with namespace containment and
  * an end line that covers the body.
  *

@@ -379,6 +379,49 @@ test('definition works for an aliased module import', async () => {
   fs.rmSync(directory, { recursive: true, force: true });
 });
 
+test('a local that shadows a library name is not answered with the library declaration', async () => {
+  const directory = workspace();
+  const source = 'fun main() <noret> {\n    let len <int> = 5;\n    printf("%d", len);\n}\n';
+  const file = writeFile(directory, 'shadow.fin', source);
+  const uri = uriOf(file);
+  const client = new Client();
+  await client.request('initialize', {
+    processId: null,
+    rootUri: uriOf(directory),
+    capabilities: {},
+    initializationOptions: { fin: { stdlibPath: STDLIB } },
+  });
+  client.notify('initialized', {});
+  client.notify('textDocument/didOpen', { textDocument: { uri, languageId: 'fin', version: 1, text: source } });
+  // `len` on line 2 is the local int, not strings::std's function.
+  const hover = await client.request('textDocument/hover', {
+    textDocument: { uri },
+    position: { line: 2, character: 17 },
+  });
+  assert.equal(hover.result, null, 'a shadowed library name gets no library hover');
+
+  const definition = await client.request('textDocument/definition', {
+    textDocument: { uri },
+    position: { line: 2, character: 17 },
+  });
+  assert.equal(definition.result, null, 'and no jump into lib/std');
+
+  const completion = await client.request('textDocument/completion', {
+    textDocument: { uri },
+    position: { line: 2, character: 17 },
+  });
+  const lenItems = (completion.result as Array<{ label: string; detail?: string }>).filter(
+    (item) => item.label === 'len',
+  );
+  assert.ok(
+    lenItems.every((item) => !/fun len\(/.test(item.detail ?? '')),
+    'the library signature is not offered for a shadowed name',
+  );
+  await client.request('shutdown', undefined);
+  await client.stop();
+  fs.rmSync(directory, { recursive: true, force: true });
+});
+
 test('definition returns null for a local variable instead of guessing', async () => {
   const directory = workspace();
   const source = 'fun main() <noret> {\n    let local <int> = 1;\n    printf("%d", local);\n}\n';

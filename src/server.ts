@@ -31,7 +31,7 @@ import {
   formatText,
   uriFromPath,
 } from './compiler';
-import { scanDeclarations } from './declarations';
+import { locallyBoundNames, scanDeclarations } from './declarations';
 import { Document } from './document';
 import { MessageReader, encodeMessage } from './framing';
 import { ImportedSymbol, declarationLocation, importAt, resolveImports, scanImports, wordAt } from './imports';
@@ -686,8 +686,9 @@ export class FinLanguageServer {
       };
     }
 
+    const local = locallyBoundNames(source.text);
     const stdlib = this.stdlib ?? (this.ensureStdlibIndex(), this.stdlib);
-    if (stdlib) {
+    if (stdlib && !local.has(word.word)) {
       const entries = stdlib.symbols.get(word.word);
       if (entries && entries.length > 0) {
         const entry = entries[0];
@@ -724,8 +725,13 @@ export class FinLanguageServer {
     const document = this.documents.get(uri);
     const text = document ? document.getText() : '';
     const items: CompletionItem[] = [];
+    const bound = locallyBoundNames(text);
     if (!this.stdlib) this.ensureStdlibIndex();
-    if (this.stdlib) items.push(...this.stdlib.completions);
+    if (this.stdlib) {
+      // A local `len` shadows the library one, so offering the library's
+      // signature as the first choice would be a lie about what the code means.
+      items.push(...this.stdlib.completions.filter((item) => !bound.has(item.label)));
+    }
     const seen = new Set(items.map((item) => item.label));
     for (const declaration of scanDeclarations(text)) {
       if (seen.has(declaration.name)) continue;
@@ -801,7 +807,8 @@ export class FinLanguageServer {
     }
 
     const stdlib = this.stdlib ?? (this.ensureStdlibIndex(), this.stdlib);
-    const stdlibEntry = stdlib?.symbols.get(word.word)?.[0];
+    const locallyBound = locallyBoundNames(source.text).has(word.word);
+    const stdlibEntry = locallyBound ? undefined : stdlib?.symbols.get(word.word)?.[0];
     if (stdlibEntry) {
       return {
         uri: uriFromPath(stdlibEntry.module.path),
