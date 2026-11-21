@@ -1,0 +1,37 @@
+// A small standard library fixture for CI, which has no Fin build.
+
+// =============================================================================
+// Fin Programming Language Compiler
+//
+// Made with ❤️ for someone special.
+// =============================================================================
+
+// Output, the `Printable` contract, the byte stream, and files.
+
+namespace std {
+
+// The C library's printf, by its own name. Variadic, and no format checking: the `...` in
+// a `@define` accepts anything. `#[global]` makes this the one name in the language that
+// needs no import, and it is legal only inside `namespace std` (ADR 0021).
+#[llvm_name="printf"]
+#[global]
+#[export]
+@define printf(fmt: string, ...) <noret>;
+
+// The other formatter, and the only one that is not C's.
+@define format!(fmt: string, ...) <string>;
+
+// What a type provides to be printed. `print`/`println` are written against this and
+// nothing else, which is why they are one line each.
+#[export]
+pub interface Printable {
+    pub fun format_str() <string>;
+}
+
+#[export]
+pub fun print_str(text: string) <noret> { printf("%s", text); }
+
+#[export]
+pub fun println_str(text: string) <noret> { printf("%s\n", text); }
+
+}

@@ -1,0 +1,49 @@
+// A small standard library fixture for CI, which has no Fin build.
+//
+// It is a verbatim excerpt of lib/std/strings.fin: the same header prose, the
+// same `namespace std`, the same declarations. Tests that assert against real
+// library text use the real lib/std when it is on the machine (see
+// declarations.test.ts) and this fixture when it is not, so CI exercises the
+// index, hover, completion and definition code paths on every platform.
+
+// =============================================================================
+// Fin Programming Language Compiler
+//
+// Made with ❤️ for someone special.
+// =============================================================================
+
+// Strings: length, comparison, search, slicing, splitting, joining, trimming, and the
+// two conversions between a `string` and a `[char]`.
+//
+// It is called `strings` and not `string` because `string` is a keyword.
+//
+// EVERY RETURNED `string` IS `malloc`ED AND THE CALLER OWNS IT.
+
+namespace std {
+
+// The byte length, not counting the terminator. `s.length` does not lower, so this is
+// how a length is asked for.
+#[export]
+pub fun len(s: string) <int> {
+    return cast<int>(strings_len(s));
+}
+
+// Content comparison, which is what `==` does not do. See the header.
+#[export]
+pub fun equals(a: string, b: string) <bool> {
+    return strings_cmp(a, b) == 0;
+}
+
+// Frees a string this module returned. Named rather than left to the caller's own
+// `@define` of `free`, because every allocating function here says to call this one.
+#[export]
+pub fun free_str(s: string) <noret> {
+    strings_release(s);
+}
+
+#[export]
+pub fun is_empty(s: string) <bool> {
+    return strings_len(s) == cast<ulong>(0);
+}
+
+}

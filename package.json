@@ -1,0 +1,33 @@
+{
+  "name": "fin-lsp",
+  "version": "0.1.0",
+  "description": "Language Server Protocol implementation for the Fin programming language",
+  "license": "MIT",
+  "author": "M1778",
+  "type": "commonjs",
+  "main": "dist/src/cli.js",
+  "bin": {
+    "fin-lsp": "dist/src/cli.js"
+  },
+  "files": [
+    "dist/src",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "prepare": "npm run build",
+    "test": "npm run build && npm run test:unit && npm run test:integration",
+    "test:unit": "node --test dist/test/framing.test.js dist/test/document.test.js dist/test/positions.test.js dist/test/declarations.test.js",
+    "test:integration": "node --test --test-concurrency=1 dist/test/integration.test.js dist/test/failures.test.js",
+    "test:real": "node --test --test-concurrency=1 dist/test/integration.test.js",
+    "smoke": "node test/tools/smoke.js"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.0"
+  }
+}

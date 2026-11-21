@@ -1,0 +1,40 @@
+// A small standard library fixture for CI, which has no Fin build.
+//
+// A verbatim-shaped excerpt of lib/std/collection.fin: a namespace, a struct
+// with a generic parameter and a bound, and private/public sections. It exists
+// so the outline and index tests have a struct to find on every platform.
+
+// =============================================================================
+// Fin Programming Language Compiler
+//
+// Made with ❤️ for someone special.
+// =============================================================================
+
+// The dynamic array.
+
+namespace std {
+
+#[export]
+pub struct CollectionError : <Error> {}
+
+#[export]
+pub struct Collection<T> : <Index, IndexAssign> {
+    priv:
+      filled <int> = 0,
+      _arr <[T]>,
+
+    pub:
+      priv fun ensure(self: &Self) <noret> {
+        if (self._arr == null) {
+            self._arr = new [T, 4]{};
+            self.filled = 0;
+        }
+      }
+
+      pub fun length(self: &Self) <int> {
+        self.ensure();
+        return self.filled;
+      }
+}
+
+}
