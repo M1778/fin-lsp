@@ -23,6 +23,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { uriFromPath } from './compiler';
 import { Declaration } from './declarations';
 import { Location, Position, Range } from './types';
 
@@ -243,7 +244,7 @@ export function resolveImports(
 
 export function declarationLocation(file: string, declaration: Declaration): Location {
   return {
-    uri: 'file://' + encodeURI(file.replace(/\\/g, '/').replace(/^([^/])/, '/$1')).replace(/#/g, '%23'),
+    uri: uriFromPath(file),
     range: {
       start: { line: declaration.startLine, character: declaration.startCharacter },
       end: { line: declaration.startLine, character: declaration.startCharacter + declaration.name.length },

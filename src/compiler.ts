@@ -77,8 +77,13 @@ export interface CheckRequest {
 function documentPath(uri: string): string | null {
   if (!uri.startsWith('file://')) return null;
   const raw = uri.slice('file://'.length);
-  // Windows: file:///c%3A/Users/... and file://server/share
-  const decoded = decodeURIComponent(raw.replace(/^\/([A-Za-z]:)/, '$1'));
+  // file:///c%3A/Users/...  ->  c:/Users/...
+  // file://server/share/x.fin ->  //server/share/x.fin
+  // file:///home/u/x.fin   ->  /home/u/x.fin
+  const decoded = decodeURIComponent(raw);
+  if (/^\/[A-Za-z]:/.test(decoded)) return decoded.slice(1);
+  if (/^[A-Za-z]:/.test(decoded)) return decoded;
+  if (!decoded.startsWith('/')) return '//' + decoded;
   return decoded;
 }
 
@@ -92,8 +97,16 @@ export function filePathFromUri(uri: string): string | null {
 
 export function uriFromPath(file: string): string {
   const normalized = file.replace(/\\/g, '/');
-  const prefixed = normalized.startsWith('/') ? normalized : `/${normalized}`;
-  return 'file://' + encodeURI(prefixed).replace(/#/g, '%23').replace(/\?/g, '%3F');
+  // `C:/x/y.fin` -> `file:///C:/x/y.fin`; `//server/share/x` -> `file://server/share/x`;
+  // a POSIX path keeps its leading slash, giving `file:///home/...`.
+  if (/^[A-Za-z]:/.test(normalized)) {
+    // `C:\Users\m\x.fin` normalises to `C:/Users/m/x.fin`; collapsing the
+    // repeated separators is what makes the two spellings one URI.
+    return 'file:///' + encodeURI(normalized.replace(/\/{2,}/g, '/'));
+  }
+  if (normalized.startsWith('//')) return 'file:' + encodeURI(normalized);
+  const absolute = normalized.startsWith('/') ? normalized : '/' + normalized;
+  return 'file://' + encodeURI(absolute).replace(/#/g, '%23').replace(/\?/g, '%3F');
 }
 
 /**
